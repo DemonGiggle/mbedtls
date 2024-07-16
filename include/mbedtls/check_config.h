@@ -729,8 +729,7 @@
 #error "MBEDTLS_PSA_ITS_FILE_C defined, but not all prerequisites"
 #endif
 
-#if defined(MBEDTLS_RSA_C) && ( !defined(MBEDTLS_BIGNUM_C) ||         \
-    !defined(MBEDTLS_OID_C) )
+#if defined(MBEDTLS_RSA_C) && !defined(MBEDTLS_BIGNUM_C)
 #error "MBEDTLS_RSA_C defined, but not all prerequisites"
 #endif
 

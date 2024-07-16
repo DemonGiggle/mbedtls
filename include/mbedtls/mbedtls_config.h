@@ -4011,6 +4011,20 @@
  */
 //#define MBEDTLS_IGNORE_RETURN( result ) ((void) !(result))
 
+/** \def MBEDTLS_RSA_ONLY_VERIFY 
+ * 
+ * Modified by Qbit. The purpose of this flag is to exclude functions
+ * other than signature verification in rsa.c.
+ */
+//#define MBEDTLS_RSA_ONLY_VERIFY
+
+/** \def MBEDTLS_BLOCK_CIPHER_NO_ENCRYPT
+ * 
+ * Modified by Qbit. The purpose of this flag is to exclude functions
+ * other than encryption in aes.c.
+ */
+//#define MBEDTLS_BLOCK_CIPHER_NO_ENCRYPT
+
 /* PSA options */
 /**
  * Use HMAC_DRBG with the specified hash algorithm for HMAC_DRBG for the

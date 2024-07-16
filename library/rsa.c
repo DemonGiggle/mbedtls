@@ -47,6 +47,9 @@
 
 #include "mbedtls/platform.h"
 
+
+#if defined(MBEDTLS_ASN1_PARSE_C)
+
 /*
  * Wrapper around mbedtls_asn1_get_mpi() that rejects zero.
  *
@@ -282,6 +285,10 @@ int mbedtls_rsa_parse_pubkey(mbedtls_rsa_context *rsa, const unsigned char *key,
     return 0;
 }
 
+#endif /* MBEDTLS_ASN1_PARSE_C */
+
+#if defined(MBEDTLS_ASN1_WRITE_C)
+
 int mbedtls_rsa_write_key(const mbedtls_rsa_context *rsa, unsigned char *start,
                           unsigned char **p)
 {
@@ -410,6 +417,7 @@ end_of_export:
 
     return (int) len;
 }
+#endif /* MBEDTLS_ASN1_WRITE_C */
 
 #if defined(MBEDTLS_PKCS1_V15) && defined(MBEDTLS_RSA_C) && !defined(MBEDTLS_RSA_ALT)
 
@@ -1184,6 +1192,8 @@ int mbedtls_rsa_check_pubkey(const mbedtls_rsa_context *ctx)
     return 0;
 }
 
+#if !defined(MBEDTLS_RSA_ONLY_VERIFY)
+
 /*
  * Check for the consistency of all fields in an RSA private key context
  */
@@ -1227,6 +1237,8 @@ int mbedtls_rsa_check_pub_priv(const mbedtls_rsa_context *pub,
 
     return 0;
 }
+
+#endif /* MBEDTLS_RSA_ONLY_VERIFY */
 
 /*
  * Do an RSA public key operation
@@ -1278,6 +1290,7 @@ cleanup:
     return 0;
 }
 
+#if !defined(MBEDTLS_RSA_ONLY_VERIFY)
 /*
  * Generate or update blinding values, see section 10 of:
  *  KOCHER, Paul C. Timing attacks on implementations of Diffie-Hellman, RSA,
@@ -1381,6 +1394,8 @@ cleanup:
     return ret;
 }
 
+#endif /* MBEDTLS_RSA_ONLY_VERIFY */
+
 /*
  * Exponent blinding supposed to prevent side-channel attacks using multiple
  * traces of measurements to recover the RSA key. The more collisions are there,
@@ -1401,6 +1416,9 @@ cleanup:
  * single trace.
  */
 #define RSA_EXPONENT_BLINDING 28
+
+
+#if !defined(MBEDTLS_RSA_ONLY_VERIFY)
 
 /*
  * Do an RSA private key operation
@@ -1604,6 +1622,8 @@ cleanup:
     return ret;
 }
 
+#endif /* MBEDTLS_RSA_ONLY_VERIFY */
+
 #if defined(MBEDTLS_PKCS1_V21)
 /**
  * Generate and apply the MGF1 operation (from PKCS#1 v2.1) to a buffer.
@@ -1730,6 +1750,8 @@ exit:
     return ret;
 }
 
+
+#if !defined(MBEDTLS_RSA_ONLY_VERIFY)
 /**
  * Compute a hash.
  *
@@ -1751,9 +1773,11 @@ static int compute_hash(mbedtls_md_type_t md_alg,
 
     return mbedtls_md(md_info, input, ilen, output);
 }
+#endif /* MBEDTLS_RSA_ONLY_VERIFY */
+
 #endif /* MBEDTLS_PKCS1_V21 */
 
-#if defined(MBEDTLS_PKCS1_V21)
+#if defined(MBEDTLS_PKCS1_V21) && !defined(MBEDTLS_RSA_ONLY_VERIFY)
 /*
  * Implementation of the PKCS#1 v2.1 RSAES-OAEP-ENCRYPT function
  */
@@ -1823,7 +1847,7 @@ int mbedtls_rsa_rsaes_oaep_encrypt(mbedtls_rsa_context *ctx,
 
     return mbedtls_rsa_public(ctx, output, output);
 }
-#endif /* MBEDTLS_PKCS1_V21 */
+#endif /* MBEDTLS_PKCS1_V21 && !MBEDTLS_RSA_ONLY_VERIFY */
 
 #if defined(MBEDTLS_PKCS1_V15)
 /*
@@ -1880,6 +1904,9 @@ int mbedtls_rsa_rsaes_pkcs1_v15_encrypt(mbedtls_rsa_context *ctx,
 }
 #endif /* MBEDTLS_PKCS1_V15 */
 
+
+#if !defined(MBEDTLS_RSA_ONLY_VERIFY)
+
 /*
  * Add the message padding, then do an RSA operation
  */
@@ -1908,7 +1935,9 @@ int mbedtls_rsa_pkcs1_encrypt(mbedtls_rsa_context *ctx,
     }
 }
 
-#if defined(MBEDTLS_PKCS1_V21)
+#endif /* MBEDTLS_RSA_ONLY_VERIFY */
+
+#if defined(MBEDTLS_PKCS1_V21) && !defined(MBEDTLS_RSA_ONLY_VERIFY)
 /*
  * Implementation of the PKCS#1 v2.1 RSAES-OAEP-DECRYPT function
  */
@@ -2033,7 +2062,7 @@ cleanup:
 
     return ret;
 }
-#endif /* MBEDTLS_PKCS1_V21 */
+#endif /* MBEDTLS_PKCS1_V21 && !MBEDTLS_RSA_ONLY_VERIFY */
 
 #if defined(MBEDTLS_PKCS1_V15)
 /*
@@ -2077,6 +2106,9 @@ cleanup:
 }
 #endif /* MBEDTLS_PKCS1_V15 */
 
+
+#if !defined(MBEDTLS_RSA_ONLY_VERIFY)
+
 /*
  * Do an RSA operation, then remove the message padding
  */
@@ -2107,7 +2139,9 @@ int mbedtls_rsa_pkcs1_decrypt(mbedtls_rsa_context *ctx,
     }
 }
 
-#if defined(MBEDTLS_PKCS1_V21)
+#endif /* MBEDTLS_RSA_ONLY_VERIFY */
+
+#if defined(MBEDTLS_PKCS1_V21) && !defined(MBEDTLS_RSA_ONLY_VERIFY)
 static int rsa_rsassa_pss_sign_no_mode_check(mbedtls_rsa_context *ctx,
                                              int (*f_rng)(void *, unsigned char *, size_t),
                                              void *p_rng,
@@ -2281,7 +2315,7 @@ int mbedtls_rsa_rsassa_pss_sign(mbedtls_rsa_context *ctx,
     return rsa_rsassa_pss_sign(ctx, f_rng, p_rng, md_alg,
                                hashlen, hash, MBEDTLS_RSA_SALT_LEN_ANY, sig);
 }
-#endif /* MBEDTLS_PKCS1_V21 */
+#endif /* MBEDTLS_PKCS1_V21 && !MBEDTLS_RSA_ONLY_VERIFY */
 
 #if defined(MBEDTLS_PKCS1_V15)
 /*
@@ -2489,6 +2523,9 @@ cleanup:
 }
 #endif /* MBEDTLS_PKCS1_V15 */
 
+
+#if !defined(MBEDTLS_RSA_ONLY_VERIFY)
+
 /*
  * Do an RSA operation to sign the message digest
  */
@@ -2521,6 +2558,8 @@ int mbedtls_rsa_pkcs1_sign(mbedtls_rsa_context *ctx,
             return MBEDTLS_ERR_RSA_INVALID_PADDING;
     }
 }
+
+#endif /* MBEDTLS_RSA_ONLY_VERIFY */
 
 #if defined(MBEDTLS_PKCS1_V21)
 /*

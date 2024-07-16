@@ -879,7 +879,7 @@ int mbedtls_aes_xts_setkey_dec(mbedtls_aes_xts_context *ctx,
 /*
  * AES-ECB block encryption
  */
-#if !defined(MBEDTLS_AES_ENCRYPT_ALT)
+#if !defined(MBEDTLS_AES_ENCRYPT_ALT) && !defined(MBEDTLS_BLOCK_CIPHER_NO_ENCRYPT)
 int mbedtls_internal_aes_encrypt(mbedtls_aes_context *ctx,
                                  const unsigned char input[16],
                                  unsigned char output[16])
@@ -936,7 +936,7 @@ int mbedtls_internal_aes_encrypt(mbedtls_aes_context *ctx,
 
     return 0;
 }
-#endif /* !MBEDTLS_AES_ENCRYPT_ALT */
+#endif /* !MBEDTLS_AES_ENCRYPT_ALT && !MBEDTLS_BLOCK_CIPHER_NO_ENCRYPT */
 
 /*
  * AES-ECB block decryption
@@ -1059,7 +1059,11 @@ int mbedtls_aes_crypt_ecb(mbedtls_aes_context *ctx,
     } else
 #endif
     {
+#if !defined(MBEDTLS_BLOCK_CIPHER_NO_ENCRYPT)
         return mbedtls_internal_aes_encrypt(ctx, input, output);
+#else
+        return 0;
+#endif
     }
 #endif /* !MBEDTLS_AES_USE_HARDWARE_ONLY */
 }

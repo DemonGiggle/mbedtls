@@ -253,6 +253,8 @@ cleanup:
     return ret;
 }
 
+#if !defined(MBEDTLS_RSA_ONLY_VERIFY)
+
 /*
  * Check that core RSA parameters are sane.
  */
@@ -365,6 +367,7 @@ cleanup:
 
     return ret;
 }
+#endif /* MBEDTLS_RSA_ONLY_VERIFY */
 
 /*
  * Check that RSA CRT parameters are in accordance with core parameters.

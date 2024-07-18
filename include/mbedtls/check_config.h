@@ -1115,6 +1115,10 @@
 #error  "MBEDTLS_PKCS7_C is defined, but not all prerequisites"
 #endif
 
+#if defined(MBEDTLS_SELF_TEST) && defined(MBEDTLS_BLOCK_CIPHER_NO_ENCRYPT)
+#error "Should not define MBEDTLS_BLOCK_CIPHER_NO_ENCRYPT while MBEDTLS_SELF_TEST is defined"
+#endif
+
 /*
  * Avoid warning from -pedantic. This is a convenient place for this
  * workaround since this is included by every single file before the

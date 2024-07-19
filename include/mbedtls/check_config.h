@@ -1119,6 +1119,10 @@
 #error "Should not define MBEDTLS_BLOCK_CIPHER_NO_ENCRYPT while MBEDTLS_SELF_TEST is defined"
 #endif
 
+#if defined(MBEDTLS_SELF_TEST) && defined(MBEDTLS_RSA_ONLY_VERIFY)
+#error "Should not define MBEDTLS_RSA_ONLY_VERIFY while MBEDTLS_SELF_TEST is defined"
+#endif
+
 /*
  * Avoid warning from -pedantic. This is a convenient place for this
  * workaround since this is included by every single file before the

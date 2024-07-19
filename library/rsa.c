@@ -2924,18 +2924,19 @@ void mbedtls_rsa_free(mbedtls_rsa_context *ctx)
 #define RSA_PT  "\xAA\xBB\xCC\x03\x02\x01\x00\xFF\xFF\xFF\xFF\xFF" \
                 "\x11\x22\x33\x0A\x0B\x0C\xCC\xDD\xDD\xDD\xDD\xDD"
 
-#if defined(MBEDTLS_PKCS1_V15)
+#if defined(MBEDTLS_PKCS1_V15) || defined(MBEDTLS_PKCS1_V21)
 static int myrand(void *rng_state, unsigned char *output, size_t len)
 {
 #if !defined(__OpenBSD__) && !defined(__NetBSD__)
     size_t i;
+    static size_t base = 0;
 
     if (rng_state != NULL) {
         rng_state  = NULL;
     }
 
     for (i = 0; i < len; ++i) {
-        output[i] = rand();
+        output[i] = (i + base) % 256;
     }
 #else
     if (rng_state != NULL) {
@@ -2954,21 +2955,40 @@ static int myrand(void *rng_state, unsigned char *output, size_t len)
  */
 int mbedtls_rsa_self_test(int verbose)
 {
+#if defined(MBEDTLS_MD_CAN_SHA1) || defined(MBEDTLS_MD_CAN_SHA256) || defined(MBEDTLS_MD_CAN_SHA384)
+#define PERFORM_HASH
+#endif
+
+// This decides the order to choose for testing
+#if defined(MBEDTLS_MD_CAN_SHA384)
+#define HASH_ALG    MBEDTLS_MD_SHA384
+#define HASH_SIZE   48
+#elif defined(MBEDTLS_MD_CAN_SHA256)
+#define HASH_ALG    MBEDTLS_MD_SHA256
+#define HASH_SIZE   32
+#elif defined(MBEDTLS_MD_CAN_SHA1)
+#define HASH_ALG    MBEDTLS_MD_SHA1
+#define HASH_SIZE   20
+#endif
+
     int ret = 0;
-#if defined(MBEDTLS_PKCS1_V15)
+#if defined(MBEDTLS_PKCS1_V15) || defined(MBEDTLS_PKCS1_V21)
     size_t len;
     mbedtls_rsa_context rsa;
     unsigned char rsa_plaintext[PT_LEN];
     unsigned char rsa_decrypted[PT_LEN];
     unsigned char rsa_ciphertext[KEY_LEN];
-#if defined(MBEDTLS_MD_CAN_SHA1)
-    unsigned char sha1sum[20];
+#if defined(PERFORM_HASH)
+    unsigned char hash[HASH_SIZE];
 #endif
 
     mbedtls_mpi K;
 
     mbedtls_mpi_init(&K);
     mbedtls_rsa_init(&rsa);
+#if defined(MBEDTLS_PKCS1_V21)
+    mbedtls_rsa_set_padding(&rsa, MBEDTLS_RSA_PKCS_V21, HASH_ALG);
+#endif
 
     MBEDTLS_MPI_CHK(mbedtls_mpi_read_string(&K, 16, RSA_N));
     MBEDTLS_MPI_CHK(mbedtls_rsa_import(&rsa, &K, NULL, NULL, NULL, NULL));
@@ -3042,13 +3062,13 @@ int mbedtls_rsa_self_test(int verbose)
         mbedtls_printf("passed\n");
     }
 
-#if defined(MBEDTLS_MD_CAN_SHA1)
+#if defined(PERFORM_HASH)
     if (verbose != 0) {
         mbedtls_printf("  PKCS#1 data sign  : ");
     }
 
-    if (mbedtls_md(mbedtls_md_info_from_type(MBEDTLS_MD_SHA1),
-                   rsa_plaintext, PT_LEN, sha1sum) != 0) {
+    if (mbedtls_md(mbedtls_md_info_from_type(HASH_ALG),
+                   rsa_plaintext, PT_LEN, hash) != 0) {
         if (verbose != 0) {
             mbedtls_printf("failed\n");
         }
@@ -3057,8 +3077,8 @@ int mbedtls_rsa_self_test(int verbose)
     }
 
     if (mbedtls_rsa_pkcs1_sign(&rsa, myrand, NULL,
-                               MBEDTLS_MD_SHA1, 20,
-                               sha1sum, rsa_ciphertext) != 0) {
+                               HASH_ALG, sizeof(hash),
+                               hash, rsa_ciphertext) != 0) {
         if (verbose != 0) {
             mbedtls_printf("failed\n");
         }
@@ -3071,8 +3091,8 @@ int mbedtls_rsa_self_test(int verbose)
         mbedtls_printf("passed\n  PKCS#1 sig. verify: ");
     }
 
-    if (mbedtls_rsa_pkcs1_verify(&rsa, MBEDTLS_MD_SHA1, 20,
-                                 sha1sum, rsa_ciphertext) != 0) {
+    if (mbedtls_rsa_pkcs1_verify(&rsa, HASH_ALG, sizeof(hash),
+                                 hash, rsa_ciphertext) != 0) {
         if (verbose != 0) {
             mbedtls_printf("failed\n");
         }
@@ -3084,7 +3104,7 @@ int mbedtls_rsa_self_test(int verbose)
     if (verbose != 0) {
         mbedtls_printf("passed\n");
     }
-#endif /* MBEDTLS_MD_CAN_SHA1 */
+#endif /* PERFORM_HASH */
 
     if (verbose != 0) {
         mbedtls_printf("\n");
@@ -3093,9 +3113,9 @@ int mbedtls_rsa_self_test(int verbose)
 cleanup:
     mbedtls_mpi_free(&K);
     mbedtls_rsa_free(&rsa);
-#else /* MBEDTLS_PKCS1_V15 */
+#else /* MBEDTLS_PKCS1_V15 || MBEDTLS_PKCS1_V21 */
     ((void) verbose);
-#endif /* MBEDTLS_PKCS1_V15 */
+#endif /* MBEDTLS_PKCS1_V15 || MBEDTLS_PKCS1_V21 */
     return ret;
 }
 
